@@ -4,7 +4,7 @@ inicio :- 	open('ambiente.pl', write, Stream),
 			close(Stream),
 			halt.
 
-% Escreve os valores em 'ambiente.pl'
+%% Escreve os valores em 'ambiente.pl'
 escreve_valores(_, I, _) :- tamanho(TAM), W is TAM + 1, I = W.
 escreve_valores(Stream, I, J) :- 	not(mina(I,J)), !, 
 									calcula_adj(I, J, N),
@@ -24,8 +24,8 @@ proxima_casa(I, J, NI, 1) :- 	tamanho(TAM),
 								
 proxima_casa(I, J, I, NJ) :- 	NJ is J + 1.
 
-% Retorna em N o número de minas adjacentes a casa (I,J).
-% False se tem mina em (I,J).
+%% Retorna em N o número de minas adjacentes a casa (I,J).
+%% False se tem mina em (I,J).
 calcula_adj(I, J, N) :- calcula_adj(I, J, N, [-1, -1, -1, 0, 1, 1, 1, 0], [-1,  0,  1, 1, 1, 0, -1, -1]).
 calcula_adj(_, _, 0, [], []).
 calcula_adj(I, J, N, [DI|L1], [DJ|L2]) :- 	NI is I + DI, NJ is J + DJ,
