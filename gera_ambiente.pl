@@ -1,3 +1,5 @@
+:- dynamic mina/2.
+
 inicio :- 	open('ambiente.pl', write, Stream),
 			['mina'],
 			escreve_valores(Stream, 1, 1),
@@ -27,7 +29,7 @@ proxima_casa(I, J, I, NJ) :- 	NJ is J + 1.
 %% Retorna em N o número de minas adjacentes a casa (I,J).
 %% False se tem mina em (I,J).
 calcula_adj(I, J, N) :- calcula_adj(I, J, N, [-1, -1, -1, 0, 1, 1, 1, 0], [-1,  0,  1, 1, 1, 0, -1, -1]).
-calcula_adj(_, _, 0, [], []).
+calcula_adj(_, _, 0, [], []) :- !. %% Vai que...
 calcula_adj(I, J, N, [DI|L1], [DJ|L2]) :- 	NI is I + DI, NJ is J + DJ,
 											tamanho(TAM),
 											NI > 0, NI =< TAM,
