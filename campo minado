@@ -36,9 +36,9 @@ Estas cláusulas devem ser gravadas em um arquivo ambiente.pl.
 Uma vez carregado, a seguinte consulta deve ser feita para executar o programa: ?- inicio.
 
 Programa 2 - prolog
-Este programa deverá ter como entrada os arquivos mina.pl e ambiente.pl, ou seja, a configuração do tabuleiro. 
+Este programa deverá ter como entrada os arquivos mina.pl e ambiente.pl, ou seja, a configuração do tabuleiro.
 O usuário, que desconhece a configuração do tabuleiro, fará então uma jogada através de uma consulta posicao(linha,coluna), e o programa deverá apresentar o seguinte:
-- "jogo encerrado": caso haja uma mina na posição (linha,coluna); 
+- "jogo encerrado": caso haja uma mina na posição (linha,coluna);
 - "n": caso existam n minas adjacentes a posição (linha,coluna);
 - "0": caso não existam minas adjacentes a posição (linha,coluna). Neste caso, todas as posições adjacentes a (linha,coluna) que não contenham minas (e portanto tenham um valor associado) também devem ser mostradas ao jogador. No caso de alguma destas posições adjacentes também ter o valor 0, as suas adjacências também devem ser mostradas.
 Todas as informações (cláusulas) mostradas ao jogador deverão ser guardadas em um arquivo chamado jogo.pl.
