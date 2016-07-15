@@ -11,37 +11,14 @@ inicio :- 	get_tamanho(TAM),
 			posicao(I,J),
  			jogar.
 
-%% heuristica([], []) :- !.
-%% heuristica([(I, J, K)|L], LP) :-    vizinhos_com_flag(I, J, VizFlags),
-%%                                     vizinhos_fechados(I, J, VizFec),
-%%                                     VizSemFlag is VizFec - VizFlags,
-%%                                     MinasDesc is K - VizFlags,
-%%                                     Prob is MinasDesc/VizSemFlag,
-%%                                     %% aplica_prob(Prob, I, J, LPV),
-%%                                     heuristica(L, LPP),
-%%                                     union(LPV, LPP, LP).
-
-%% aplica_prob(Prob, I, J, LP)
-
-%% inicio :-   writeln('HI'),
-%% 			inicio,
-%% 			writeln('HELLO').
-
-%% heuristica :- 	get_tamanho(TAM),
-%% 				random_between(1,TAM,I),
-%% 				random_between(1,TAM,J),
-%% 				not(valor(I,J,_)), !,
-%% 				posicao(I,J),
-%% 				escolhe_proxima.
-%% heuristica :-	heuristica.
-
 jogar :-	objetivo.
 jogar :- 	['jogo'],
-			lista_abertas(La),
+			fronteira(La),
 			jogar_logica(La, NLa),
-			['jogo'],
-			jogar_heuris(NLa),
-			jogar.
+			%% ['jogo'],
+			%% jogar_heuris(NLa),
+			%% jogar.
+			inicio.
 
 objetivo :-   	total_fechadas(Tfec),
             	total_flags(Tflag),
@@ -50,7 +27,8 @@ objetivo :-   	total_fechadas(Tfec),
 
 jogar_logica(L, NL) :- jogar_logica([], L, NL).
 jogar_logica(Lista, Lista, Lista) :- !.
-jogar_logica(_, Lista, NL) :-  	processa(Lista, NovaLista),
+jogar_logica(_, Lista, NL) :-  	processa(Lista),
+								fronteira(NovaLista),
                         		jogar_logica(Lista, NovaLista, NL).
 
 jogar_heuris(La) :- calcula_prob(La, PL),
@@ -98,52 +76,29 @@ union_prob([Item | L1], L, L2) :- 	union_prob(L1, L, L3),
 									append([Item], L3, L2).
 
 
-lista_abertas(L) :- lista_abertas(1,1,L).
-lista_abertas(I, _, []) :-  get_tamanho(TAM), I > TAM, !.
-lista_abertas(I, J, L) :- 	valor(I, J, K),
-                            K > 0, !,
+fronteira(L) :- fronteira(1,1,L).
+fronteira(I, _, []) :-  get_tamanho(TAM), I > TAM, !.
+fronteira(I, J, L) :- 	valor(I, J, K),
+							vizinhos_fechados(I, J, F),
+							K > 0, F > 0, !,
 							proxima_casa(I, J, NI, NJ),
-							lista_abertas(NI, NJ, La),
+							fronteira(NI, NJ, La),
 							append([(I, J, K)], La, L).
-lista_abertas(I, J, L) :- 	proxima_casa(I, J, NI, NJ),
-							lista_abertas(NI, NJ, L).
+fronteira(I, J, L) :- 	proxima_casa(I, J, NI, NJ),
+							fronteira(NI, NJ, L).
 
-processa([], []) :- !.
-processa([(I,J,K)|L], NL) :-    vizinhos_com_flag(I, J, VizFlags),
-                                VizFlags = K, !,
-                                abre_vizinhos(I, J, LVizAbertos),
-                                processa(L, NLP),
-                                append(LVizAbertos, NLP, NL).
+processa([]) :- !.
+processa([(I,J,K)|L]) :-    vizinhos_com_flag(I, J, VizFlags),
+                            VizFlags = K, !,
+                            abre_vizinhos(I, J),
+                            processa(L).
 
-processa([(I,J,K)|L], NL) :-    vizinhos_fechados(I, J, VizFec),
-                                VizFec = K, !,
-                                flag_vizinhos(I, J),
-                                processa(L, NL).
+processa([(I,J,K)|L]) :-    vizinhos_fechados(I, J, VizFec),
+                            VizFec = K, !,
+                            flag_vizinhos(I, J),
+                            processa(L).
 
-processa([Casa | L], NL) :-     processa(L, NLP),
-                                append([Casa], NLP, NL).
-
-% escolhe_proxima :- 	consult(['jogo']),
-% 					valor(I, J, K),
-% 					K > 0,
-% 					n_flags(I, J, Nflags),
-% 					n_fechadas(I, J, Nfechadas),
-% 					swritef(StrAux, '(%d,%d)=(Nflags=%d,Nfechadas=%d)\n', [I, J, Nflags, Nfechadas]),
-% 					write(StrAux),
-% 					descobrir_minas(I, J, K, Nflags, Nfechadas),
-% 					descobrir_seguras(I, J, K, Nflags),
-% 					fail.
-
-%% escolhe_proxima :- heuristica.
-
-%% escolhe_proxima :- total_fechadas(Tfechadas),
-%% 				   total_flags(Tflags),
-%% 				   Tfechadas = Tflags, !,
-%% 				   writeln('Ganhou!'),
-%% 				   halt.
-
-%% escolhe_proxima :- true.
-
+processa([_ | L]) :-     processa(L).
 
 %% True se N é o número de casas com flag em torno da casa (I, J).
 vizinhos_com_flag(I, J, N) :- vizinhos_com_flag(I, J, N, [-1, -1, -1, 0, 1, 1, 1, 0], [-1,  0,  1, 1, 1, 0, -1, -1]).
@@ -216,20 +171,18 @@ flag_vizinhos(I, J, [DI|L1], [DJ|L2]) :- 	NI is I + DI, NJ is J + DJ,
 
 flag_vizinhos(I, J, [_|L1], [_|L2]) :- flag_vizinhos(I, J, L1, L2).
 
-abre_vizinhos(I, J, L) :- abre_vizinhos(I, J, [-1, -1, -1, 0, 1, 1, 1, 0], [-1,  0,  1, 1, 1, 0, -1, -1], L).
-abre_vizinhos(_, _, [], [], []) :- !.
-abre_vizinhos(I, J, [DI|L1], [DJ|L2], L) :- 	NI is I + DI, NJ is J + DJ,
-    											get_tamanho(TAM),
-    											NI > 0, NI =< TAM,
-    											NJ > 0, NJ =< TAM,
-    											not(valor(NI, NJ, _)),
-    											not(tem_flag(NI, NJ)), !,
-    											swritef(StrAux, 'A partir de (%d,%d) = casa segura em (%d,%d)\n', [I, J, NI, NJ]),
-    										    write(StrAux),
-    											posicao(NI, NJ),
-    											['jogo'],
-    											valor(NI, NJ, K),
-    											abre_vizinhos(I, J, L1, L2, LP),
-    											append([(NI, NJ, K)], LP, L).
+abre_vizinhos(I, J) :- abre_vizinhos(I, J, [-1, -1, -1, 0, 1, 1, 1, 0], [-1,  0,  1, 1, 1, 0, -1, -1]).
+abre_vizinhos(_, _, [], []) :- !.
+abre_vizinhos(I, J, [DI|L1], [DJ|L2]) :- 	NI is I + DI, NJ is J + DJ,
+											get_tamanho(TAM),
+											NI > 0, NI =< TAM,
+											NJ > 0, NJ =< TAM,
+											not(valor(NI, NJ, _)),
+											not(tem_flag(NI, NJ)), !,
+											swritef(StrAux, 'A partir de (%d,%d) = casa segura em (%d,%d)\n', [I, J, NI, NJ]),
+										    write(StrAux),
+											posicao(NI, NJ),
+											['jogo'],
+											abre_vizinhos(I, J, L1, L2).
 
-abre_vizinhos(I, J, [_|L1], [_|L2], L) :- abre_vizinhos(I, J, L1, L2, L).
+abre_vizinhos(I, J, [_|L1], [_|L2]) :- abre_vizinhos(I, J, L1, L2).
