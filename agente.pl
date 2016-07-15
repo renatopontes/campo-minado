@@ -1,4 +1,5 @@
 :- use_module(library(random)).
+:- use_module(library(lists)).
 :- use_module(gera_jogo).
 
 :- dynamic valor/3.
@@ -15,10 +16,9 @@ jogar :-	objetivo.
 jogar :- 	['jogo'],
 			fronteira(La),
 			jogar_logica(La, NLa),
-			%% ['jogo'],
-			%% jogar_heuris(NLa),
-			%% jogar.
-			inicio.
+			['jogo'],
+			jogar_heuris(NLa),
+			jogar.
 
 objetivo :-   	total_fechadas(Tfec),
             	total_flags(Tflag),
@@ -32,10 +32,12 @@ jogar_logica(_, Lista, NL) :-  	processa(Lista),
                         		jogar_logica(Lista, NovaLista, NL).
 
 jogar_heuris(La) :- calcula_prob(La, PL),
+					PL = [_ | _],
 					min_member((MinProb,_,_), PL),
 					lista_minimos(PL, MinProb, MinPL),
 					random_member((_, I, J), MinPL),
 					posicao(I, J).
+jogar_heuris(La).
 
 lista_minimos([], _, []) :- !.
 lista_minimos([(Prob, I, J) | PLr], MinProb, MinPL) :-	Prob = MinProb, !,
@@ -67,23 +69,25 @@ atribuir_prob(I, J, Prob, PLP, [DI|L1], [DJ|L2]) :-	NI is I + DI, NJ is J + DJ,
 													append([(Prob, NI, NJ)], PLPr, PLP).
 atribuir_prob(I, J, Prob, PLP, [_|L1], [_|L2]) :- atribuir_prob(I, J, Prob, PLP, L1, L2).
 
-union_prob([], _, []) :- !.
-union_prob([(Prob, I, J) | L1], L, L2) :- 	member((ProbAlt, I, J), L), !,
+union_prob([], L2, L2) :- !.
+union_prob([(Prob, I, J) | Lr], L2, L3) :- 	member((ProbAlt, I, J), L2), !,
 											max_member(ProbFinal, [Prob, ProbAlt]),
-											union_prob(L1, L, L3),
-											append([(ProbFinal, I, J)], L3, L2).
-union_prob([Item | L1], L, L2) :- 	union_prob(L1, L, L3),
-									append([Item], L3, L2).
+											delete(L2, (_, I, J), L2mod),
+											union_prob(Lr, L2mod, L3p),
+											append([(ProbFinal, I, J)], L3p, L3).
+union_prob([Item | Lr], L2, L3) :- 	union_prob(Lr, L2, L3p),
+									append([Item], L3p, L3).
 
 
 fronteira(L) :- fronteira(1,1,L).
 fronteira(I, _, []) :-  get_tamanho(TAM), I > TAM, !.
 fronteira(I, J, L) :- 	valor(I, J, K),
-							vizinhos_fechados(I, J, F),
-							K > 0, F > 0, !,
-							proxima_casa(I, J, NI, NJ),
-							fronteira(NI, NJ, La),
-							append([(I, J, K)], La, L).
+						vizinhos_fechados(I, J, Nfech),
+						vizinhos_com_flag(I, J, Nflag),
+						K > 0, Nfech > 0, Nfech > Nflag, !,
+						proxima_casa(I, J, NI, NJ),
+						fronteira(NI, NJ, La),
+						append([(I, J, K)], La, L).
 fronteira(I, J, L) :- 	proxima_casa(I, J, NI, NJ),
 							fronteira(NI, NJ, L).
 
@@ -165,8 +169,8 @@ flag_vizinhos(I, J, [DI|L1], [DJ|L2]) :- 	NI is I + DI, NJ is J + DJ,
 										not(valor(NI, NJ, _)),
 										not(tem_flag(NI, NJ)), !,
 										asserta(tem_flag(NI,NJ)),
-										swritef(StrAux, 'A partir de (%d,%d) = mina em (%d,%d)\n', [I, J, NI, NJ]),
-										write(StrAux),
+										%% swritef(StrAux, 'A partir de (%d,%d) = mina em (%d,%d)\n', [I, J, NI, NJ]),
+										%% write(StrAux),
 										flag_vizinhos(I, J, L1, L2).
 
 flag_vizinhos(I, J, [_|L1], [_|L2]) :- flag_vizinhos(I, J, L1, L2).
@@ -179,8 +183,8 @@ abre_vizinhos(I, J, [DI|L1], [DJ|L2]) :- 	NI is I + DI, NJ is J + DJ,
 											NJ > 0, NJ =< TAM,
 											not(valor(NI, NJ, _)),
 											not(tem_flag(NI, NJ)), !,
-											swritef(StrAux, 'A partir de (%d,%d) = casa segura em (%d,%d)\n', [I, J, NI, NJ]),
-										    write(StrAux),
+											%% swritef(StrAux, 'A partir de (%d,%d) = casa segura em (%d,%d)\n', [I, J, NI, NJ]),
+										    %% write(StrAux),
 											posicao(NI, NJ),
 											['jogo'],
 											abre_vizinhos(I, J, L1, L2).
