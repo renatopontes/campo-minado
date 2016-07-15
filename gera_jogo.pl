@@ -5,7 +5,8 @@
 :- dynamic tamanho/1.
 :- dynamic arquivo_aberto/0.
 :- dynamic jogada/1.
-:- multifile posicao/2.
+:- ['mina'].
+:- ['ambiente'].
 
 posicao(I, J) :- 	not(arquivo_aberto), !,
 					open('jogo.pl', write, Stream),
@@ -19,9 +20,7 @@ posicao(I, J) :- 	open('jogo.pl', append, Stream),
 					escreve_jogada(L, I, J, Stream),
 					posicao(I, J, Stream).
 
-posicao(I, J, Stream) :-	['mina'],
-							['ambiente'],
-							abrir_casa(I,J,Stream),
+posicao(I, J, Stream) :-	abrir_casa(I,J,Stream),
 							close(Stream).
 
 incrementa_jogada(L) :- 	jogada(K), !,
@@ -64,5 +63,4 @@ escreve_resposta(String, Stream) :- atom_concat(String, '.\n', StringFile),
 									write(Stream, StringFile),
 									writeln(String).
 
-get_tamanho(TAM) :- ['mina'],
-					tamanho(TAM).
+get_tamanho(TAM) :- tamanho(TAM).
