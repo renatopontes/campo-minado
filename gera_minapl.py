@@ -47,7 +47,7 @@ if __name__ == '__main__':
         print('{:2} |'.format(i+1), end='')
         for j in range(n):
             if (i, j) in mine_cells:
-                print(' ▨ |', end='')
+                print(' ■ |', end='')
             else:
                 around = 0
                 for k in range(8):

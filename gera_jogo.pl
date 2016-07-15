@@ -1,10 +1,12 @@
 :- module(gera_jogo, [posicao/2, get_tamanho/1]).
+
 :- dynamic aberto/2.
 :- dynamic mina/2.
 :- dynamic valor/3.
 :- dynamic tamanho/1.
 :- dynamic arquivo_aberto/0.
 :- dynamic jogada/1.
+
 :- ['mina'].
 :- ['ambiente'].
 

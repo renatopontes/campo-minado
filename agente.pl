@@ -6,6 +6,7 @@
 :- dynamic jogo_encerrado/0.
 :- dynamic tem_flag/2.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 inicio :- 	get_tamanho(TAM),
 			random_between(1,TAM,I),
 			random_between(1,TAM,J),
@@ -25,71 +26,12 @@ objetivo :-   	total_fechadas(Tfec),
             	Tfec = Tflag, !,
             	writeln('Ganhou :D'), halt.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 jogar_logica(L, NL) :- jogar_logica([], L, NL).
 jogar_logica(Lista, Lista, Lista) :- !.
 jogar_logica(_, Lista, NL) :-  	processa(Lista),
 								fronteira(NovaLista),
                         		jogar_logica(Lista, NovaLista, NL).
-
-jogar_heuris(La) :- calcula_prob(La, PL),
-					PL = [_ | _],
-					min_member((MinProb,_,_), PL),
-					lista_minimos(PL, MinProb, MinPL),
-					random_member((_, I, J), MinPL),
-					posicao(I, J).
-jogar_heuris(La).
-
-lista_minimos([], _, []) :- !.
-lista_minimos([(Prob, I, J) | PLr], MinProb, MinPL) :-	Prob = MinProb, !,
-														lista_minimos(PLr, MinProb, PLP),
-														append([(Prob,I,J)], PLP, MinPL).
-lista_minimos([_|PLr], MinProb, MinPL) :- lista_minimos(PLr, MinProb, MinPL).
-
-
-
-calcula_prob([], []).
-calcula_prob([(I, J, K) | La], PL) :- 	vizinhos_fechados(I, J, Nfech),
-										vizinhos_com_flag(I, J, Nflag),
-										Num is K - Nflag,
-										Den is Nfech - Nflag,
-										Prob is Num / Den,
-										atribuir_prob(I, J, Prob, PLP),
-										calcula_prob(La, PLR),
-										union_prob(PLP, PLR, PL).
-
-atribuir_prob(I, J, Prob, PLP) :- atribuir_prob(I, J, Prob, PLP, [-1, -1, -1, 0, 1, 1, 1, 0], [-1,  0,  1, 1, 1, 0, -1, -1]).
-atribuir_prob(_, _, _, [], [], []) :- !.
-atribuir_prob(I, J, Prob, PLP, [DI|L1], [DJ|L2]) :-	NI is I + DI, NJ is J + DJ,
-													get_tamanho(TAM),
-													NI > 0, NI =< TAM,
-													NJ > 0, NJ =< TAM,
-													not(valor(NI,NJ,_)),
-													not(tem_flag(NI,NJ)), !,
-													atribuir_prob(I, J, Prob, PLPr, L1, L2),
-													append([(Prob, NI, NJ)], PLPr, PLP).
-atribuir_prob(I, J, Prob, PLP, [_|L1], [_|L2]) :- atribuir_prob(I, J, Prob, PLP, L1, L2).
-
-union_prob([], L2, L2) :- !.
-union_prob([(Prob, I, J) | Lr], L2, L3) :- 	member((ProbAlt, I, J), L2), !,
-											max_member(ProbFinal, [Prob, ProbAlt]),
-											delete(L2, (_, I, J), L2mod),
-											union_prob(Lr, L2mod, L3p),
-											append([(ProbFinal, I, J)], L3p, L3).
-union_prob([Item | Lr], L2, L3) :- 	union_prob(Lr, L2, L3p),
-									append([Item], L3p, L3).
-
-
-fronteira(L) :- fronteira(1,1,L).
-fronteira(I, _, []) :-  get_tamanho(TAM), I > TAM, !.
-fronteira(I, J, L) :- 	valor(I, J, K),
-						vizinhos_fechados(I, J, Nfech),
-						vizinhos_com_flag(I, J, Nflag),
-						K > 0, Nfech > 0, Nfech > Nflag, !,
-						proxima_casa(I, J, NI, NJ),
-						fronteira(NI, NJ, La),
-						append([(I, J, K)], La, L).
-fronteira(I, J, L) :- 	proxima_casa(I, J, NI, NJ),
-							fronteira(NI, NJ, L).
 
 processa([]) :- !.
 processa([(I,J,K)|L]) :-    vizinhos_com_flag(I, J, VizFlags),
@@ -103,6 +45,81 @@ processa([(I,J,K)|L]) :-    vizinhos_fechados(I, J, VizFec),
                             processa(L).
 
 processa([_ | L]) :-     processa(L).
+
+flag_vizinhos(I, J) :- flag_vizinhos(I, J, [-1, -1, -1, 0, 1, 1, 1, 0], [-1,  0,  1, 1, 1, 0, -1, -1]).
+flag_vizinhos(_, _, [], []) :- !.
+flag_vizinhos(I, J, [DI|L1], [DJ|L2]) :- 	NI is I + DI, NJ is J + DJ,
+										get_tamanho(TAM),
+										NI > 0, NI =< TAM,
+										NJ > 0, NJ =< TAM,
+										not(valor(NI, NJ, _)),
+										not(tem_flag(NI, NJ)), !,
+										asserta(tem_flag(NI,NJ)),
+										flag_vizinhos(I, J, L1, L2).
+
+flag_vizinhos(I, J, [_|L1], [_|L2]) :- flag_vizinhos(I, J, L1, L2).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+jogar_heuris(La) :- calcula_prob(La, PL),
+					PL = [_ | _],
+					min_member((MinProb,_,_), PL),
+					lista_minimos(PL, MinProb, MinPL),
+					random_member((_, I, J), MinPL),
+					posicao(I, J).
+jogar_heuris(_).
+
+calcula_prob([], []).
+calcula_prob([(I, J, K) | La], PL) :- 	vizinhos_fechados(I, J, Nfech),
+										vizinhos_com_flag(I, J, Nflag),
+										Num is K - Nflag,
+										Den is Nfech - Nflag,
+										Prob is Num / Den,
+										atribuir_prob(I, J, Prob, PLP),
+										calcula_prob(La, PLR),
+										union_prob(PLP, PLR, PL).
+
+union_prob([], L2, L2) :- !.
+union_prob([(Prob, I, J) | Lr], L2, L3) :- 	member((ProbAlt, I, J), L2), !,
+											max_member(ProbFinal, [Prob, ProbAlt]),
+											delete(L2, (_, I, J), L2mod),
+											union_prob(Lr, L2mod, L3p),
+											append([(ProbFinal, I, J)], L3p, L3).
+union_prob([Item | Lr], L2, L3) :- 	union_prob(Lr, L2, L3p),
+									append([Item], L3p, L3).
+
+
+lista_minimos([], _, []) :- !.
+lista_minimos([(Prob, I, J) | PLr], MinProb, MinPL) :-	Prob = MinProb, !,
+														lista_minimos(PLr, MinProb, PLP),
+														append([(Prob,I,J)], PLP, MinPL).
+lista_minimos([_|PLr], MinProb, MinPL) :- lista_minimos(PLr, MinProb, MinPL).
+
+
+atribuir_prob(I, J, Prob, PLP) :- atribuir_prob(I, J, Prob, PLP, [-1, -1, -1, 0, 1, 1, 1, 0], [-1,  0,  1, 1, 1, 0, -1, -1]).
+atribuir_prob(_, _, _, [], [], []) :- !.
+atribuir_prob(I, J, Prob, PLP, [DI|L1], [DJ|L2]) :-	NI is I + DI, NJ is J + DJ,
+													get_tamanho(TAM),
+													NI > 0, NI =< TAM,
+													NJ > 0, NJ =< TAM,
+													not(valor(NI,NJ,_)),
+													not(tem_flag(NI,NJ)), !,
+													atribuir_prob(I, J, Prob, PLPr, L1, L2),
+													append([(Prob, NI, NJ)], PLPr, PLP).
+atribuir_prob(I, J, Prob, PLP, [_|L1], [_|L2]) :- atribuir_prob(I, J, Prob, PLP, L1, L2).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+fronteira(L) :- fronteira(1,1,L).
+fronteira(I, _, []) :-  get_tamanho(TAM), I > TAM, !.
+fronteira(I, J, L) :- 	valor(I, J, K),
+						vizinhos_fechados(I, J, Nfech),
+						vizinhos_com_flag(I, J, Nflag),
+						K > 0, Nfech > 0, Nfech > Nflag, !,
+						proxima_casa(I, J, NI, NJ),
+						fronteira(NI, NJ, La),
+						append([(I, J, K)], La, L).
+fronteira(I, J, L) :- 	proxima_casa(I, J, NI, NJ),
+							fronteira(NI, NJ, L).
 
 %% True se N é o número de casas com flag em torno da casa (I, J).
 vizinhos_com_flag(I, J, N) :- vizinhos_com_flag(I, J, N, [-1, -1, -1, 0, 1, 1, 1, 0], [-1,  0,  1, 1, 1, 0, -1, -1]).
@@ -160,21 +177,6 @@ proxima_casa(I, J, NI, 1) :- 	get_tamanho(TAM),
 
 proxima_casa(I, J, I, NJ) :- 	NJ is J + 1.
 
-flag_vizinhos(I, J) :- flag_vizinhos(I, J, [-1, -1, -1, 0, 1, 1, 1, 0], [-1,  0,  1, 1, 1, 0, -1, -1]).
-flag_vizinhos(_, _, [], []) :- !.
-flag_vizinhos(I, J, [DI|L1], [DJ|L2]) :- 	NI is I + DI, NJ is J + DJ,
-										get_tamanho(TAM),
-										NI > 0, NI =< TAM,
-										NJ > 0, NJ =< TAM,
-										not(valor(NI, NJ, _)),
-										not(tem_flag(NI, NJ)), !,
-										asserta(tem_flag(NI,NJ)),
-										%% swritef(StrAux, 'A partir de (%d,%d) = mina em (%d,%d)\n', [I, J, NI, NJ]),
-										%% write(StrAux),
-										flag_vizinhos(I, J, L1, L2).
-
-flag_vizinhos(I, J, [_|L1], [_|L2]) :- flag_vizinhos(I, J, L1, L2).
-
 abre_vizinhos(I, J) :- abre_vizinhos(I, J, [-1, -1, -1, 0, 1, 1, 1, 0], [-1,  0,  1, 1, 1, 0, -1, -1]).
 abre_vizinhos(_, _, [], []) :- !.
 abre_vizinhos(I, J, [DI|L1], [DJ|L2]) :- 	NI is I + DI, NJ is J + DJ,
@@ -183,8 +185,6 @@ abre_vizinhos(I, J, [DI|L1], [DJ|L2]) :- 	NI is I + DI, NJ is J + DJ,
 											NJ > 0, NJ =< TAM,
 											not(valor(NI, NJ, _)),
 											not(tem_flag(NI, NJ)), !,
-											%% swritef(StrAux, 'A partir de (%d,%d) = casa segura em (%d,%d)\n', [I, J, NI, NJ]),
-										    %% write(StrAux),
 											posicao(NI, NJ),
 											['jogo'],
 											abre_vizinhos(I, J, L1, L2).
