@@ -1,3 +1,4 @@
+```
 0. AUTORES
 --------------------------------------------------------------------------------
 
@@ -237,3 +238,4 @@ Seguem os passos executados pelo agente:
 Se PL for vazio, apenas retornamos true.
 
 Se o agente não perder nessa jogada, pode ser possível determinar as próximas jogadas a partir do método anterior. A fronteira é recalculada e voltamos a jogar logicamente.
+```
