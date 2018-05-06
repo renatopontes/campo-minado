@@ -11,7 +11,6 @@
 
 . Python 3
 . SWI-Prolog, de preferência a versão estável mais recente quando esse documento foi escrito: 7.2.3.
-. Ler esse documento de forma que pelo menos 80 caracteres sejam mostrados por linha, do contrário a formatação poderá ficar incorreta em alguns lugares. De preferência, usar largura de exatamente 80 caracteres.
 
 
 2. INSTRUÇÕES DE USO
